@@ -1,0 +1,366 @@
+1)****************************************************************************
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define newnode (struct node*)malloc(sizeof(struct node))
+
+struct node
+{
+    char s[80];                                                                        
+    struct node *next,*prev;
+}*head=NULL;
+
+char fname[40];                                                                     
+int cnt=0;
+
+void append(char st[80])                                                        
+    struct node *p=NULL,*new=NULL;
+    if(head==NULL)
+    {
+        head=newnode;
+        strcpy(head->s,st);
+        head->next=head->prev=NULL;                                      
+    }
+    else
+    {
+        for(p=head ; p->next ; p=p->next);                                
+        p->next=newnode;
+        p->next->prev=p;
+        p=p->next;
+        strcpy(p->s,st);
+        p->next=NULL;
+    }
+    ++cnt;                                                                               
+}
+
+void copy(int pos1,int pos2)                                                       
+{
+    int i;
+    char str[80];
+    struct node *p=NULL,*q=NULL,*newn=NULL;    
+    if(pos1<cnt+1 && pos1>0 && pos2>0 && pos2<=cnt)
+    {
+        for(i=1,p=head ; i<=pos1-1 && p->next!=NULL ; i++,p=p->next);
+        if(pos1<pos2 || pos1>pos2)
+        {
+          if(pos2!=cnt)
+          {
+            for(i=1,q=head ; i<=pos2-1 && q->next!=NULL ; i++,q=q->next);
+            newn=newnode;
+            newn->next=q->next;
+            newn->next->prev=newn;
+            q->next=newn;                                                            
+            newn->prev=q;                                                             
+            strcpy(newn->s,p->s);
+            ++cnt;                                                                          
+           }
+           else
+           {
+                for(q=head;q->next!=NULL;q=q->next);
+                q->next=newnode;
+                q->next->prev=q;
+                q=q->next;
+                strcpy(q->s,p->s);
+                q->next=NULL;
+                ++cnt;
+           }
+           // printf("\npos %d : %s\ncopied data of %d node and pested it after %d node SUCCESSFULL\n",pos1,p->s,pos1,pos2);
+        }
+    }
+    else printf("Invalid boundry entered...please use 'h' for help\n");
+}
+
+void load()                                                                                         
+{
+	FILE *fp;
+	char buff[80];
+	fp=fopen(fname,"r");
+	if(fp==NULL)
+	{
+		printf("\nFile %s not found\n",fname);
+		exit(0);
+	}
+	while(fgets(buff,80,fp)!=NULL)                                                     
+	    append(buff);
+	fclose(fp);
+}
+
+void save()                                                                                         
+{
+    FILE *fp;
+    struct node *temp;
+    fp=fopen(fname,"w");
+    if(fp==NULL)
+    {
+        printf("\n error in file opening");
+        return;
+    }
+    else
+    {
+        temp=head;
+        while(temp!=NULL)                                                                     
+        {
+            fputs(temp->s,fp);
+            fputs("\n",fp);
+            temp=temp->next;
+        }
+    }
+    fclose(fp);
+}
+
+main(int argc,char *argv[0])
+{
+    char cmd[10],str[80],c;
+    FILE *fp;
+    if(argc>1)
+    {
+        strcpy(fname,argv[1]);
+        fp=fopen(fname,"r");
+        if(fp==NULL)
+        {
+            fp=fopen(fname,"w+");
+            fclose(fp);                                                                     
+            printf("\nFile %s is created.\n",fname);
+        }
+        else
+            load();                                                                               
+    }
+    else
+    {
+        printf("Enter file name : ");                                               
+        scanf("%s",fname);
+        fp=fopen(fname,"r");
+        if(fp==NULL)
+        {
+            fp=fopen(fname,"w+");
+            fclose(fp);
+            printf("\nFile %s is created.\n",fname);
+        }
+        else
+            load();
+    }
+    do
+    {
+        int f=0,e=0,t=0;
+        char p[80];
+        printf("\n$ : ");
+        fflush(stdin);
+        gets(cmd);
+        sscanf(cmd," %c %d %d %d",&c,&f,&e,&t);                         
+        if(c=='f')
+            sscanf(cmd," %c %c",&c,p);                                            
+        switch(c)
+        {
+            case 'A' :
+            case 'a' :   printf("\t\tEnter the string . . .\n");
+                            fflush(stdin);
+                            gets(str);
+                            while(strcmp(str,"exit"))
+                            {
+                                 append(str);                                               
+                                 fflush(stdin);
+                                 gets(str);
+                            }break;
+
+                  
+            case 'C' :
+            case 'c' :   if(t==0)    copy(f,e);                                          
+                            else
+                            {
+                                if(t<f)
+                                while(f<=e+2)
+                                {
+                                   copy(f,t);                                                    
+                                   f+=2;
+                                   t++;
+                                }
+                                else
+                                while(f<=e)
+                                {
+                                    copy(f,t);                                                   
+                                    f++;
+                                    t++;
+                                }
+                            }break;
+            
+            case 'S' :
+            case 's' :   save(); break;                                                    
+            
+            case 'H' :
+            case 'h' :   printf("\na       : To Append.\nc m n   : Copy m th node after n th node.\ns       : Save\nh       : Help\ne       : To Exit.\n");
+                        break;                                                                     
+            
+            case 'E' :
+            case 'e' :   exit(0);                                                              
+            
+            default  :   printf("\nInvalid command..please use 'h' for help\n");
+        }
+    }while(c!='e');  
+    return 0;
+}
+
+2)****************************************************************************
+
+
+#include<stdio.h>
+#include<string.h>
+#define super 0
+#define blksz 64
+#define root 16
+
+unsigned char mem[256][blksz];
+void Setinode(int inode,int filesz,int start,int index)
+{  int i,j;
+   i=inode/16 + 1;
+   j=(inode%16) * 4;
+   mem[i][j]=inode; 
+   mem[i][j+1]=filesz;
+   mem[i][j+2]=start;
+   mem[i][j+3]=index;
+}
+void Setindex(int index, int blk)
+{ int i;
+  for(i=0;i<blksz; i++)
+  { if(mem[index][i]==0) break;
+  }
+  mem[index][i]=blk;
+}
+void dispindexblk(int indx)
+{  int i;
+  for(i=0;i<blksz; i++)
+  { if(mem[indx][i]==0) break;
+    printf("%3d",mem[indx][i]);
+  }
+}
+void Format()
+{ int i,j;
+  for(i=0;i<256;i++)
+     for(j=0;j<blksz;j++) mem[i][j]=0;
+
+  mem[super][0]=15*16;
+  mem[super][1]=1;
+  mem[super][2]=15;
+  mem[super][3]=18;
+  mem[super][4]=16;
+  Setinode(0,blksz,16,17);
+  Setindex(17,16);
+  for(i=18; i<256; i++) mem[i][0]=i+1;
+  mem[255][0]=0;
+}
+int AddDirEntry(int blk,char *fname)
+{int i,j;
+  for(i=0;i<blksz;i=i+8)
+  { if(mem[blk][i]==0) break;
+  }
+  mem[blk][i]=mem[super][1];
+  mem[super][1]++;
+  for(j=0; j<8 && fname[j]!='\0'; j++) mem[blk][i+j+1]=fname[j];
+
+   return mem[blk][i];
+}
+void Create()
+{ 
+  char fn[30];  int i,inode,fsz,strtblk,indxblk,next;
+  printf("\nFile Name : ");  
+  fflush(stdin);
+  scanf("%s",&fn);
+  printf("\nFile Size(in blocks) = ");  scanf("%d",&fsz);
+  inode=AddDirEntry(root,fn);
+
+  indxblk=mem[super][3];
+  mem[super][3]=mem[indxblk][0];
+
+  strtblk=mem[super][3];
+  mem[super][3]=mem[strtblk][0];
+  mem[indxblk][0]=strtblk;
+
+  for(i=1; i<fsz;i++)
+  { next=mem[super][3];
+    mem[indxblk][i]=next;
+    mem[super][3]=mem[next][0];
+  }
+  Setinode(inode,fsz,strtblk,indxblk);
+  printf("%s file created successfully...\n",fn);
+}
+void DispFreeBlks()
+{  int i=mem[super][3];
+   printf("\nFree Space(Blocks) On the Disk : \n");
+   do
+   { printf("%5d",i);
+     i=mem[i][0];
+   }while(mem[i][0]!=0);
+}
+void DispDir()
+{
+  int i,j,inode,blk,k;
+  printf("Space(Blocks) Used by %s File is : \n\n",fn);
+  printf("\n  inode  File   Size Startblk  index");
+  printf("\n---------------------------------------");
+  for(i=0;i<blksz;i=i+8)
+  { if(mem[root][i]==0) continue;
+    inode=mem[root][i];
+    printf("\n%4d  ",inode);
+    for(j=i+1;j<i+8; j++) putchar(mem[root][j]);
+    blk=inode/16+1;
+    k=(inode%16)*4;
+    printf(" %4d   %4d   %4d  |",mem[blk][k+1],mem[blk][k+2],mem[blk][k+3]);
+    dispindexblk(mem[blk][k+3]);
+  }
+}
+void Delete()
+{ char fn[30];  int inode,i,j,k,blk,datablk,indxblk,strtblk,fsz;
+  printf("\nFile Name : ");  fflush(stdin); scanf("%s",&fn);
+  for(i=0;i<blksz;i=i+8)
+  { if(mem[root][i]==0) continue;
+
+    if(!strncmp(&mem[root][i+1],fn,7)) break;
+  }
+  if(i>=blksz)  printf("\nSuch file does not exist!\n");
+  else
+  { inode=mem[root][i];
+    mem[root][i]=0;
+    for(j=i+1;j<i+8; j++)
+    {
+      mem[root][j]=0;
+    }
+    blk=inode/16+1;
+    k=(inode%16)*4;
+    fsz=mem[blk][k+1];
+    strtblk=mem[blk][k+2];
+    indxblk=mem[blk][k+3];
+    for(j=k;j<k+4; j++)  mem[blk][j]=0;
+
+    for(j=0;j<fsz;j++)
+    { datablk=mem[indxblk][j];
+      mem[datablk][0]=mem[indxblk][j+1];
+      mem[indxblk][j]=0;
+    }
+    mem[indxblk][0]=strtblk;
+    mem[datablk][0]=mem[super][3];
+    mem[super][3]=indxblk;
+    printf("%s Deleted successfully..!\n\n",fn);
+  }
+}
+main()
+{
+  Format();
+  int ch;
+  while(1)
+  { 
+    printf("\n1:Create File\n2:Display free blks\n3:Disp Dir\n4:Delete File");
+    printf("\n0:Exit");
+    printf("\nEnter your choice : ");
+    scanf("%d",&ch);
+    switch(ch)
+    { 
+      case 1 : Create(); break;
+      case 2 : DispFreeBlks(); break;
+      case 3 : DispDir(); break;
+      case 4 : Delete(); break;
+      case 0 : exit(0);
+      default : printf("\n Please Choose Correct Choice..!");
+    }
+   }
+}
+
